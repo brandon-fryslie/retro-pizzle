@@ -3,19 +3,18 @@ from pprint import pprint
 
 import requests
 
-from save_cache import print_gamespot_request
+from save_cache import print_giantbomb_request
 
 logger = logging.getLogger(__name__)
 
-def send_gamespot_request(url, offset, limit):
-    api_token = "9026db69bd804fbff5fb73fb91e380601bc1dfdb"
+
+def send_giantbomb_request(url, offset, limit):
+    # giantbomb token
+    api_token = "6be0705e9cb70665179bb77163ef02dea86f046b"
+
 
     params = {
         'format': 'json',
-        # 'field_list': 'id,genres,upc,name,platform,upc,reviews_api_url',
-        'sort': 'id=asc',
-        'limit': limit,
-        'offset': offset,
         'api_key': api_token,
     }
 
@@ -23,14 +22,11 @@ def send_gamespot_request(url, offset, limit):
         'User-Agent': 'Chuck Norris',
     }
 
-    logger.debug(f"Sending GameSpot request to Reviews URL {url} with params {params}")
+    logger.debug(f"Sending GiantBomb request to Reviews URL {url} with params {params}")
 
     r = requests.get(url, headers=headers, params=params)
 
-    return print_gamespot_request(r)
+    return print_giantbomb_request(r)
 
 def fetch_rating():
-    url = "https://www.gamespot.com/api/reviews/?filter=association%3A5000-84"
-    r = send_gamespot_request(url, offset=0, limit=100)
-    print("got response for review")
-    pprint(r)
+    pass

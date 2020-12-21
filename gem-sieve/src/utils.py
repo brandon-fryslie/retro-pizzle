@@ -15,7 +15,7 @@ def print_response(r):
     pprint(r['results'])
 
 def write_cache_file(file_no: int, pages):
-    cache_file_path = f"{get_cache_dir()}/gamespot_cache_{file_no}.json"
+    cache_file_path = f"{get_cache_dir()}/giantbomb_cache_{file_no}.json"
     with open(cache_file_path, "w") as f:
         json.dump(pages, f, indent=4, sort_keys=True)
 

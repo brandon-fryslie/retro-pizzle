@@ -5,7 +5,7 @@ from logs import info_log
 from utils import get_cache_dir
 
 def load_cache_page(file_no: int):
-    cache_file_path = f"{get_cache_dir()}/gamespot_cache_{file_no}.json"
+    cache_file_path = f"{get_cache_dir()}/giantbomb_cache_{file_no}.json"
     with open(cache_file_path, "r") as f:
         return json.load(f)
 

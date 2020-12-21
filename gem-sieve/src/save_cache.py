@@ -12,30 +12,30 @@ logger = logging.getLogger(__name__)
 GLOBAL_LIMIT_PER_REQUEST = 100
 REQUEST_PAGES_PER_CACHE_FILE = 100
 
-def send_gamespot_request(offset, limit):
-    api_token = "9026db69bd804fbff5fb73fb91e380601bc1dfdb"
-    api_token_postfix = f"?api_key={api_token}"
-    gamespot_url = "http://www.gamespot.com/api/games"
+def send_giantbomb_request(offset, limit):
+    api_token = "6be0705e9cb70665179bb77163ef02dea86f046b"
+    base_url = "https://www.giantbomb.com/api/games"
 
-    url = f"{gamespot_url}/{api_token_postfix}"
+    url = base_url
 
     params = {
         'format': 'json',
-        # 'field_list': 'id,genres,upc,name,platform,upc,reviews_api_url',
+        'field_list': 'id,guid,name,platform,original_game_rating,number_of_user_reviews',
         'sort': 'id=asc',
         'limit': limit,
         'offset': offset,
+        'api_key': api_token,
     }
 
     headers = {
         'User-Agent': 'Chuck Norris',
     }
 
-    logger.debug(f"Sending GameSpot request to URL {url} with params {params}")
+    logger.debug(f"Sending GiantBomb request to URL {url} with params {params}")
 
     r = requests.get(url, headers=headers, params=params)
 
-    return print_gamespot_request(r)
+    return print_giantbomb_request(r)
 
 def get_next_page(page_data):
     offset = int(page_data['offset'])
@@ -44,10 +44,10 @@ def get_next_page(page_data):
     next_offset = offset + number_returned
 
     print(f"Getting next page: offset: {offset}, number_returned: {page_data['number_of_page_results']}, next_offset: {next_offset}")
-    return send_gamespot_request(offset=next_offset, limit=limit)
+    return send_giantbomb_request(offset=next_offset, limit=limit)
 
 
-def print_gamespot_request(r):
+def print_giantbomb_request(r):
     if r.status_code == 200:
         # success_log("Request succeeded!")
         pass
@@ -56,15 +56,18 @@ def print_gamespot_request(r):
 
     return r.json()
 
-def cache_all_pages():
+def cache_all_pages(total_result_override = None):
     info_log(f"Caching all pages!  Sending initial request")
 
-    current_page = send_gamespot_request(offset=0, limit=GLOBAL_LIMIT_PER_REQUEST)
+    current_page = send_giantbomb_request(offset=0, limit=GLOBAL_LIMIT_PER_REQUEST)
 
     # loop to get all the next pages
 
     total_results = int(current_page['number_of_total_results'])
     results_so_far = int(current_page['number_of_page_results'])
+
+    if total_result_override is not None:
+        total_results = total_result_override
 
     # We already got the first page
     page_number = 2
@@ -83,10 +86,9 @@ def cache_all_pages():
 
         pages.append(current_page)
 
-        # write to the cache file
         if len(pages) >= REQUEST_PAGES_PER_CACHE_FILE:
             # write the cache file
-            info_log(f"Writing cache file #{cache_file_number}")
+            info_log(f"Writing giantbomb cache file #{cache_file_number}")
             write_cache_file(cache_file_number, pages)
             pages = []
             cache_file_number += 1
