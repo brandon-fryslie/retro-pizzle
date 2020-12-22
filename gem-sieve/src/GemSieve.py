@@ -19,6 +19,9 @@ import logging
 import fetch_review
 import load_cache
 import logs
+import match_gems
+import metacritic
+import nes_filter
 import save_cache
 from logs import info_log, error_log
 
@@ -34,6 +37,9 @@ parser = argparse.ArgumentParser(description='Search for Gems')
 parser.add_argument('--cache-pages', dest='should_cache_pages', action='store_true', default=False)
 parser.add_argument('--load', dest='load_cached_pages', action='store_true', default=False)
 parser.add_argument('--fetch', dest='fetch_review', action='store_true', default=False)
+parser.add_argument('--metacritic', dest='metacritic', action='store_true', default=False)
+parser.add_argument('--match-gems', dest='match_gems', action='store_true', default=False)
+parser.add_argument('--nes', dest='nes', action='store_true', default=False)
 parser.add_argument('--debug', dest='debug', action='store_true', default=False)
 
 args = parser.parse_args()
@@ -53,6 +59,19 @@ elif args.load_cached_pages:
 elif args.fetch_review:
     info_log("Fetching ratings")
     fetch_review.fetch_review()
+
+elif args.metacritic:
+    info_log("Querying metacritic")
+    metacritic.query()
+
+elif args.match_gems:
+    info_log("Matching Gems")
+    gems = metacritic.query()
+    match_gems.match(gems)
+
+elif args.nes:
+    info_log("NES GAMES")
+    nes_filter.filter_and_delete()
 
 else:
     error_log("No action specified")

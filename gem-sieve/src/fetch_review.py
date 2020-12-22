@@ -16,10 +16,20 @@ def send_giantbomb_request(offset, limit):
 
     url = base_url
 
+    fields = [
+        'id',
+        'name',
+        'platform',
+        'game',
+        'score',
+        'api_detail_url',
+        'site_detail_url',
+
+    ]
 
     params = {
         'format': 'json',
-        # 'field_list': 'id,guid,name,platform,original_game_rating,number_of_user_reviews',
+        'field_list': ','.join(fields),
         'sort': 'id=asc',
         'limit': limit,
         'offset': offset,
