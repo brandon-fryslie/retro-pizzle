@@ -20,9 +20,14 @@ def write_cache_file(file_no: int, pages):
         json.dump(pages, f, indent=4, sort_keys=True)
 
 def get_cache_dir():
-    cache_dir = os.path.abspath(f"./cache")
-    os.makedirs(cache_dir, exist_ok=True)
-    return cache_dir
+    dir = os.path.abspath(f"./giantbomb_cache")
+    os.makedirs(dir, exist_ok=True)
+    return dir
+
+def get_results_dir():
+    dir = os.path.abspath(f"./giantbomb_results")
+    os.makedirs(dir, exist_ok=True)
+    return dir
 
 def write_file(path, content):
     with open(path, "w") as f:

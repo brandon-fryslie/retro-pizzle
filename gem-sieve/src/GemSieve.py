@@ -16,7 +16,7 @@
 import argparse
 import logging
 
-import fetch_rating
+import fetch_review
 import load_cache
 import logs
 import save_cache
@@ -33,7 +33,7 @@ info_log("Beginning Gem Sieve")
 parser = argparse.ArgumentParser(description='Search for Gems')
 parser.add_argument('--cache-pages', dest='should_cache_pages', action='store_true', default=False)
 parser.add_argument('--load', dest='load_cached_pages', action='store_true', default=False)
-parser.add_argument('--fetch', dest='fetch_rating', action='store_true', default=False)
+parser.add_argument('--fetch', dest='fetch_review', action='store_true', default=False)
 parser.add_argument('--debug', dest='debug', action='store_true', default=False)
 
 args = parser.parse_args()
@@ -44,15 +44,15 @@ if args.debug:
 
 if args.should_cache_pages:
     info_log("Caching pages")
-    save_cache.cache_all_pages(100)
+    save_cache.cache_all_pages(initial_offset=70000)
 
 elif args.load_cached_pages:
     info_log("Loading cached pages")
     load_cache.load_cached_pages()
 
-elif args.fetch_rating:
+elif args.fetch_review:
     info_log("Fetching ratings")
-    fetch_rating.fetch_rating()
+    fetch_review.fetch_review()
 
 else:
     error_log("No action specified")

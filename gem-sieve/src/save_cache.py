@@ -1,4 +1,5 @@
 import logging
+import math
 import time
 from pprint import pprint
 
@@ -20,7 +21,7 @@ def send_giantbomb_request(offset, limit):
 
     params = {
         'format': 'json',
-        'field_list': 'id,guid,name,platform,original_game_rating,number_of_user_reviews',
+        # 'field_list': 'id,guid,name,platform,original_game_rating,number_of_user_reviews',
         'sort': 'id=asc',
         'limit': limit,
         'offset': offset,
@@ -56,22 +57,28 @@ def print_giantbomb_request(r):
 
     return r.json()
 
-def cache_all_pages(total_result_override = None):
-    info_log(f"Caching all pages!  Sending initial request")
+def cache_all_pages(total_result_override = None, initial_offset=0):
+    info_log(f"Caching all pages!  Sending initial request (initial_offset: {initial_offset})")
 
-    current_page = send_giantbomb_request(offset=0, limit=GLOBAL_LIMIT_PER_REQUEST)
+    current_page = send_giantbomb_request(offset=initial_offset, limit=GLOBAL_LIMIT_PER_REQUEST)
 
     # loop to get all the next pages
 
     total_results = int(current_page['number_of_total_results'])
-    results_so_far = int(current_page['number_of_page_results'])
+    results_so_far = int(current_page['number_of_page_results']) + initial_offset
 
     if total_result_override is not None:
         total_results = total_result_override
 
     # We already got the first page
     page_number = 2
-    cache_file_number = 1
+
+    # cache file number is initial_offset
+    results_per_cache_file = GLOBAL_LIMIT_PER_REQUEST * REQUEST_PAGES_PER_CACHE_FILE
+    cache_file_number = math.ceil(initial_offset / results_per_cache_file)
+
+    print(f"using initial cache file number {cache_file_number}")
+
 
     pages = [current_page]
 
