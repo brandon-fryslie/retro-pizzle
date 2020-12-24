@@ -2,6 +2,9 @@ import json
 import os
 from pprint import pprint
 
+import requests
+from bs4 import BeautifulSoup
+
 from logs import info_log
 
 
@@ -32,3 +35,28 @@ def get_results_dir():
 def write_file(path, content):
     with open(path, "w") as f:
         f.write(content)
+
+def convert_to_float(frac_str):
+    try:
+        return float(frac_str)
+    except ValueError:
+        num, denom = frac_str.split('/')
+        try:
+            leading, num = num.split(' ')
+            whole = float(leading)
+        except ValueError:
+            whole = 0
+        frac = float(num) / float(denom)
+        return whole - frac if whole < 0 else whole + frac
+
+def bs_query(url) -> BeautifulSoup:
+    headers = {
+        'User-Agent': 'Chuck Norris',
+    }
+
+    # get data
+    r = requests.get(url, headers = headers)
+
+    # parsing html
+    return BeautifulSoup(r.content, features='lxml')
+

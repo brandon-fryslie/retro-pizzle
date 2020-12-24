@@ -17,6 +17,7 @@ import argparse
 import logging
 
 import fetch_review
+import google_it
 import load_cache
 import logs
 import match_gems
@@ -39,6 +40,7 @@ parser.add_argument('--load', dest='load_cached_pages', action='store_true', def
 parser.add_argument('--fetch', dest='fetch_review', action='store_true', default=False)
 parser.add_argument('--metacritic', dest='metacritic', action='store_true', default=False)
 parser.add_argument('--match-gems', dest='match_gems', action='store_true', default=False)
+parser.add_argument('--google', dest='google', action='store_true', default=False)
 parser.add_argument('--nes', dest='nes', action='store_true', default=False)
 parser.add_argument('--debug', dest='debug', action='store_true', default=False)
 
@@ -72,6 +74,10 @@ elif args.match_gems:
 elif args.nes:
     info_log("NES GAMES")
     nes_filter.filter_and_delete()
+
+elif args.google:
+    info_log("GOOGLING IT")
+    google_it.query_snes_roms()
 
 else:
     error_log("No action specified")
