@@ -6,8 +6,8 @@ from typing import List, Optional
 import re
 from bs4 import BeautifulSoup
 
-from game import review
-from game.review import Review
+from reviews import review
+from reviews.review import Review
 
 
 def find_ratings(el: BeautifulSoup) -> List[str]:
@@ -33,7 +33,7 @@ def find_ratings(el: BeautifulSoup) -> List[str]:
 
     return scores
 
-def extract_google_reviews(el: BeautifulSoup) -> Optional[List[Review]]:
+def extract_google_reviews(url: str, el: BeautifulSoup) -> Optional[List[Review]]:
     # Search for
     # #search
     # Who is it?  <h3 class="zBAuLc"><div class="BNeawe vvjwJb AP7Wnd">Syphon Filter 3 for PlayStation Reviews - Metacritic</div></h3>
@@ -65,4 +65,4 @@ def extract_google_reviews(el: BeautifulSoup) -> Optional[List[Review]]:
 
     all_scores = scores + more_scores
 
-    return [Review(score) for score in all_scores]
+    return [Review(score, url=url, source="Google Search Page") for score in all_scores]

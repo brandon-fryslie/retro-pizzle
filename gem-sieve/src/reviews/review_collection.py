@@ -1,7 +1,7 @@
 import statistics
 from typing import List
 
-from game.review import Review
+from reviews.review import Review
 
 class ReviewCollection:
 

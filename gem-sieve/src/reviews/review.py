@@ -10,13 +10,14 @@ from logs import info_log, error_log
 
 class Review():
 
-    def __init__(self, score: Union[str,float,int], source: str = "Unknown", type: str = "Unknown"):
+    def __init__(self, score: Union[str,float,int], url: str, source: str, type: str = "unknown"):
         self.source = source
-        self.type = type
+        self.url = url
+        self.type = type.lower()
         self.score = normalize_score(score)
 
     def __str__(self):
-        return f"Review[score={self.score},source={self.source},type={self.type}]"
+        return f"Review[score={self.score},url={self.url},source={self.source},type={self.type}]"
 
     def __repr__(self):
         return str(self)

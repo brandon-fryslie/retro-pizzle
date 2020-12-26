@@ -1,6 +1,6 @@
 import os
 
-from game.rom import Rom
+from roms.rom import Rom
 
 
 class RomCollection:

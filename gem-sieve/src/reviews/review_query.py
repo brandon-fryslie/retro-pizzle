@@ -6,47 +6,31 @@
 # data-attrid="kc:/cvg/computer_videogame:reviews"
 
 # Only works w/ newer platforms :/
+import os
 import re
 import sys
 import time
 from pprint import pprint
-from typing import List, Dict, Optional
+from typing import Optional, List
 
-import requests
-from bs4 import BeautifulSoup
 from googlesearch import search
 
 import utils
-from game import review
-from game.review import Review
-from game.review_collection import ReviewCollection
-from game.rom import Rom
-from game.rom_collection import RomCollection
-from logs import error_log, info_log, success_log
+import soup_helper
+from reviews.review_collection import ReviewCollection
+from roms.rom_collection import RomCollection
+from logs import error_log, info_log
 from extractors import gamefaqs, gamespot, google_search_page
-
-
-def ensure_soup(el):
-    if el is None:
-        raise RuntimeError("ERROR: No soup for you!  Query was None")
-
-    if len(el) == 0:
-        raise RuntimeError("ERROR: No soup for you!  No results in query")
-
-def check_soup(el):
-    if el is None:
-        return False
-
-    if len(el) == 0:
-        return False
-
-    return True
-
 
 def query_other_reviews(query: str):
     # print(f"Getting results for Google search: {query}")
     search_results = search(query, num_results=15, lang="en")
+
+    # dedupe
+    search_results = list(set(search_results))
+
     results = []
+
     for search_result in search_results:
         # look at specific sites we can parse
         if re.search(r"gamefaqs.gamespot.com", search_result):
@@ -72,9 +56,9 @@ def query_for_score(title: str, platform: str) -> Optional[ReviewCollection]:
 
     info_log(f"Querying for Google top-level reviews at url: {url}")
 
-    soup = utils.bs_query(url)
+    soup = soup_helper.bs_query(url)
 
-    google_reviews = google_search_page.extract_google_reviews(soup)
+    google_reviews = google_search_page.extract_google_reviews(url, soup)
 
     info_log(f"Querying for other reviews")
     other_review_results = query_other_reviews(f"{title} {platform} review")
@@ -85,23 +69,28 @@ def query_for_score(title: str, platform: str) -> Optional[ReviewCollection]:
 
     return ReviewCollection(google_reviews + other_review_results)
 
-def query_roms(base_roms_dir: str, platform: str):
-    path = f"{base_roms_dir}/{platform}"
+def query_roms(platform: str):
 
-    rc = RomCollection(path, platform)
+    # load the list from the rom-lists files
 
-    # limit to a few roms for now, gotta throttle this
-    # roms = rc.roms[:100]
-    roms = rc.roms
+    rom_lists_dir = os.path.abspath("../../rom-lists")
+    rom_list_path = f"{rom_lists_dir}/rom-list-{platform}.txt"
+    logs_dir = os.path.abspath("../../logs")
 
-    info_log(f"INFO: Querying reviews for {len(roms)} roms for platform {platform}")
+    if not os.path.exists(rom_list_path):
+        error_log(f"ERROR: No rom list created for platform {platform}")
+        sys.exit(1)
+
+    rom_titles = utils.read_file(rom_list_path).split('\n')
+
+    info_log(f"INFO: Querying reviews for {len(rom_titles)} roms for platform {platform}")
 
     rom_scores = {}
 
     # /// Single rom for testing ///
 
-    # single_rom_title = "Super Bomberman 3"
-    # single_rom_platform = "snes"
+    # single_rom_title = "Goal!"
+    # single_rom_platform = "nes"
     # score_result = query_for_score(single_rom_title, single_rom_platform)
     #
     # if score_result is None:
@@ -109,6 +98,9 @@ def query_roms(base_roms_dir: str, platform: str):
     #
     # print(f"!!! got score result for {single_rom_title} ({platform})")
     # pprint(score_result)
+    # for review in score_result.reviews:
+    #     info_log(f"- {review.score} [{review.source}] ({review.url}) [{review.type}]")
+    #
     # return
 
     # /// Single rom for testing ///
@@ -116,21 +108,23 @@ def query_roms(base_roms_dir: str, platform: str):
     no_review_roms = []
     err_msgs = []
     try:
-        for rom in roms:
-            info_log(f"Querying Google for Review: {rom.title} ({rom.platform})")
-            score_result = query_for_score(rom.title, rom.platform)
+        for rom_title in rom_titles:
+            info_log(f"Querying Google for Review: {rom_title} ({platform})")
+            score_result = query_for_score(rom_title, platform)
 
             if score_result is None:
-                error_log(f"\nCould not find reviews for game: {rom.title} ({rom.platform})\n")
-                no_review_roms.append(f"{rom.title} ({rom.platform})")
+                error_log(f"\nCould not find reviews for game: {rom_title} ({platform})\n")
+                no_review_roms.append(f"{rom_title} ({platform})")
             else:
                 info_log(f"""\
                 
-    ===
-    Title: {rom.title} (path: {rom.fs.path})
-    Score Result: {score_result.raw_numbers()} (mean: {score_result.mean():.2f})
-    ===
-    """)
+===
+Title: {rom_title}""")
+
+                for review in score_result.reviews:
+                    info_log(f"- {review.score} [{review.source}] ({review.url}) [{review.type}]")
+
+                info_log("===\n")
 
             time.sleep(.2)
     except Exception as e:
@@ -138,5 +132,5 @@ def query_roms(base_roms_dir: str, platform: str):
         error_log(str(e))
         err_msgs.append(str(e))
 
-    utils.write_file("./no-review-roms.txt", "\n".join(no_review_roms))
-    utils.write_file("./errors.log", "\n".join(err_msgs))
+    utils.write_file(f"{logs_dir}/{platform}-no-review-roms.txt", "\n".join(no_review_roms))
+    utils.write_file(f"{logs_dir}/{platform}-errors.log", "\n".join(err_msgs))

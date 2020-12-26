@@ -1,12 +1,12 @@
 import re
-from pprint import pprint
 from typing import List
 
+import soup_helper
 import utils
-from game.review import Review
-from logs import info_log, error_log
+from reviews.review import Review
+from logs import error_log
 
-def extract_user(base_url: str):
+def extract_user(base_url: str) -> List[Review]:
     """
 
     :param base_url: The base URL for the title (game) on gamefaqs, e.g. https://gamefaqs.gamespot.com/snes/588341-the-flintstones-the-treasure-of-sierra-madrock
@@ -14,21 +14,19 @@ def extract_user(base_url: str):
     """
 
     url = f"{base_url}/reviews"
-    soup = utils.bs_query(url)
+    soup = soup_helper.bs_query(url)
 
-    # Only extracts user scores
-    # TODO: extract critic scores
     scores = soup.select(".review_score")
 
     reviews = []
     for score in scores:
         # info_log(f"Extracted gamefaqs User scores: {score.text}")
-        review = Review(f"{score.text}/10", "GameFaqs", "user")
+        review = Review(f"{score.text}/10", url=url, source="GameFaqs", type="user")
         reviews.append(review)
 
     return reviews
 
-def parse_review_text(text: str) -> Review:
+def parse_review_text(url: str, text: str) -> Review:
     """
     Parse the review text from the html element
     """
@@ -40,9 +38,9 @@ def parse_review_text(text: str) -> Review:
     review_score = match.group(1).strip()
     review_source = match.group(2).strip()
 
-    return Review(review_score, source=review_source, type="critic")
+    return Review(review_score, url=url, source=review_source, type="critic")
 
-def extract_critic(base_url: str):
+def extract_critic(base_url: str) -> List[Review]:
     """
 
     :param base_url: The base URL for the title (game) on gamefaqs, e.g. https://gamefaqs.gamespot.com/snes/588341-the-flintstones-the-treasure-of-sierra-madrock
@@ -50,12 +48,12 @@ def extract_critic(base_url: str):
     """
 
     url = f"{base_url}/critic"
-    soup = utils.bs_query(url)
+    soup = soup_helper.bs_query(url)
 
     # these are some of the reviews.  others are in a link
     critic_scores = soup.select(".reviews_critic .info .name")
 
-    return [parse_review_text(s.text) for s in critic_scores]
+    return [parse_review_text(url, s.text) for s in critic_scores]
 
 def extract_gamefaqs(url: str) -> List[Review]:
     "Extract reviews from GameFaqs"

@@ -28,14 +28,18 @@ def get_cache_dir():
     os.makedirs(dir, exist_ok=True)
     return dir
 
-def get_results_dir():
+def get_results_dir() -> str:
     dir = os.path.abspath(f"./giantbomb_results")
     os.makedirs(dir, exist_ok=True)
     return dir
 
-def write_file(path, content):
+def write_file(path, content) -> None:
     with open(path, "w") as f:
         f.write(content)
+
+def read_file(path) -> str:
+    with open(path, "r") as f:
+        return f.read()
 
 def convert_to_float(frac_str):
     try:
@@ -51,15 +55,3 @@ def convert_to_float(frac_str):
 
         frac = float(num) / float(denom)
         return whole - frac if whole < 0 else whole + frac
-
-def bs_query(url) -> BeautifulSoup:
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.2 Safari/605.1.15',
-    }
-
-    # get data
-    r = requests.get(url, headers = headers)
-
-    # parsing html
-    return BeautifulSoup(r.content, features='lxml')
-

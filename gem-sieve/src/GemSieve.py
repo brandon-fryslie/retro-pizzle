@@ -15,8 +15,9 @@
 
 import argparse
 import logging
+import sys
 
-import google_it
+from reviews import review_query
 import logs
 import match_gems
 import metacritic
@@ -27,14 +28,16 @@ from logs import info_log, error_log
 # got an API key!
 
 # Lets see if I can grab the list right from giantbomb
-
+from roms import roms_list
 
 info_log("Beginning Gem Sieve")
 
 
 parser = argparse.ArgumentParser(description='Search for Gems')
-parser.add_argument('-d', '--base-roms-dir', dest='base_roms_dir', action='store', required=True)
+parser.add_argument('-d', '--base-rom-dir', dest='base_rom_dir', action='store')
 parser.add_argument('-p', '--platform', dest='platform', action='store', required=True)
+parser.add_argument('-o', '--output-dir', dest='output_dir', action='store', default="../../rom-lists")
+parser.add_argument('--create-rom-list', dest='create_rom_list', action='store_true', default=False)
 parser.add_argument('--debug', dest='debug', action='store_true', default=False)
 
 args = parser.parse_args()
@@ -43,6 +46,13 @@ if args.debug:
     print(logs.magenta("DEBUG MODE ENABLED"))
     logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
 
+if args.create_rom_list:
+    if args.base_rom_dir is None:
+        error_log("ERROR: Must pass --base-roms-dir when creating roms list")
+        sys.exit(1)
+    info_log("Creating rom list")
+    roms_list.create_rom_list(args.base_rom_dir, args.platform, args.output_dir)
 
-info_log(f"Sifting roms for {args.platform}.  Base roms directory: {args.base_roms_dir}")
-google_it.query_roms(args.base_roms_dir, args.platform)
+else:
+    info_log(f"Sifting roms for {args.platform}")
+    review_query.query_roms(args.platform)

@@ -3,13 +3,13 @@ from typing import List
 
 from bs4 import BeautifulSoup
 
-import utils
-from game.review import Review
+import soup_helper
+from reviews.review import Review
 from logs import info_log
 
 # TODO: get entire score breaking down including
 # number of reviews, etc.  maybe create a separate review for each of them
-def extract_user(soup: BeautifulSoup):
+def extract_user(url: str, soup: BeautifulSoup):
     """
 
     :param base_url: The URL for the title (game) on GameSpot, e.g., https://www.gamespot.com/games/the-lawnmower-man/reviews/
@@ -20,7 +20,7 @@ def extract_user(soup: BeautifulSoup):
     pprint(user_score)
 
     reviews = []
-    review = Review(f"{user_score}/10", "GameSpot", "user")
+    review = Review(f"{user_score}/10", url=url, source="GameSpot", type="user")
     reviews.append(review)
 
     pprint(reviews)
@@ -28,7 +28,7 @@ def extract_user(soup: BeautifulSoup):
     return reviews
 
 # this is prolly mostly useless
-def extract_metacritc(soup: BeautifulSoup):
+def extract_metacritc(url: str, soup: BeautifulSoup):
     """
 
     :param base_url: The URL for the title (game) on GameSpot, e.g., https://www.gamespot.com/games/the-lawnmower-man/reviews/
@@ -42,7 +42,7 @@ def extract_metacritc(soup: BeautifulSoup):
     score = score_el.text.strip()
 
     reviews = []
-    review = Review(f"{score}/10", "GameSpot", "metacritic")
+    review = Review(f"{score}/10", url=url, source="GameSpot", type="metacritic")
     reviews.append(review)
 
     return reviews
@@ -52,7 +52,7 @@ def extract(url) -> List[Review]:
     # reviewObject__metacritic
     info_log(f"Extracting from GameSpot url: {url}")
     all_reviews = []
-    soup = utils.bs_query(url)
-    all_reviews += extract_user(soup)
-    all_reviews += extract_metacritc(soup)
+    soup = soup_helper.bs_query(url)
+    all_reviews += extract_user(url, soup)
+    all_reviews += extract_metacritc(url, soup)
     return all_reviews
