@@ -16,9 +16,7 @@
 import argparse
 import logging
 
-import fetch_review
 import google_it
-import load_cache
 import logs
 import match_gems
 import metacritic
@@ -35,13 +33,8 @@ info_log("Beginning Gem Sieve")
 
 
 parser = argparse.ArgumentParser(description='Search for Gems')
-parser.add_argument('--cache-pages', dest='should_cache_pages', action='store_true', default=False)
-parser.add_argument('--load', dest='load_cached_pages', action='store_true', default=False)
-parser.add_argument('--fetch', dest='fetch_review', action='store_true', default=False)
-parser.add_argument('--metacritic', dest='metacritic', action='store_true', default=False)
-parser.add_argument('--match-gems', dest='match_gems', action='store_true', default=False)
-parser.add_argument('--google', dest='google', action='store_true', default=False)
-parser.add_argument('--nes', dest='nes', action='store_true', default=False)
+parser.add_argument('-d', '--base-roms-dir', dest='base_roms_dir', action='store', required=True)
+parser.add_argument('-p', '--platform', dest='platform', action='store', required=True)
 parser.add_argument('--debug', dest='debug', action='store_true', default=False)
 
 args = parser.parse_args()
@@ -50,34 +43,6 @@ if args.debug:
     print(logs.magenta("DEBUG MODE ENABLED"))
     logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
 
-if args.should_cache_pages:
-    info_log("Caching pages")
-    save_cache.cache_all_pages(initial_offset=70000)
 
-elif args.load_cached_pages:
-    info_log("Loading cached pages")
-    load_cache.load_cached_pages()
-
-elif args.fetch_review:
-    info_log("Fetching ratings")
-    fetch_review.fetch_review()
-
-elif args.metacritic:
-    info_log("Querying metacritic")
-    metacritic.query()
-
-elif args.match_gems:
-    info_log("Matching Gems")
-    gems = metacritic.query()
-    match_gems.match(gems)
-
-elif args.nes:
-    info_log("NES GAMES")
-    nes_filter.filter_and_delete()
-
-elif args.google:
-    info_log("GOOGLING IT")
-    google_it.query_snes_roms()
-
-else:
-    error_log("No action specified")
+info_log(f"Sifting roms for {args.platform}.  Base roms directory: {args.base_roms_dir}")
+google_it.query_roms(args.base_roms_dir, args.platform)

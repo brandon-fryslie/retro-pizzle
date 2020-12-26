@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pprint import pprint
 
 import requests
@@ -41,17 +42,19 @@ def convert_to_float(frac_str):
         return float(frac_str)
     except ValueError:
         num, denom = frac_str.split('/')
+        num, denom = (num.strip(), denom.strip())
         try:
             leading, num = num.split(' ')
             whole = float(leading)
         except ValueError:
             whole = 0
+
         frac = float(num) / float(denom)
         return whole - frac if whole < 0 else whole + frac
 
 def bs_query(url) -> BeautifulSoup:
     headers = {
-        'User-Agent': 'Chuck Norris',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.2 Safari/605.1.15',
     }
 
     # get data

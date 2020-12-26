@@ -7,6 +7,7 @@
 
 # Only works w/ newer platforms :/
 import re
+import sys
 import time
 from pprint import pprint
 from typing import List, Dict, Optional
@@ -22,7 +23,8 @@ from game.review_collection import ReviewCollection
 from game.rom import Rom
 from game.rom_collection import RomCollection
 from logs import error_log, info_log, success_log
-from extractors import gamefaqs
+from extractors import gamefaqs, gamespot, google_search_page
+
 
 def ensure_soup(el):
     if el is None:
@@ -40,46 +42,19 @@ def check_soup(el):
 
     return True
 
-def extract_google_reviews(el: BeautifulSoup) -> Optional[ReviewCollection]:
-    # Search for
-    # #search
-    # Who is it?  <h3 class="zBAuLc"><div class="BNeawe vvjwJb AP7Wnd">Syphon Filter 3 for PlayStation Reviews - Metacritic</div></h3>
-    # rating itself: <span class="r0bn4c rQMQod">Rating</span> <span class="r0bn4c rQMQod tP9Zud"> <span aria-hidden="true" class="Eq0J8 oqSTJd">6.5/10</span>
-
-    # ignore who the review is from.  just grab whatever
-
-    # regex = re.compile(r".*(?:[\d.]+\/[\d.]+|\d+%).*")
-    regex = re.compile(r"[\d.]+\/[\d.]+|\d+%")
-    score_candidate_els = el.find_all("span", text=regex)
-
-    if not check_soup(score_candidate_els):
-        return None
-
-    def _check_candidate(item):
-        try:
-            review.normalize_score(item)
-            return True
-        except ValueError:
-            return False
-
-    scores = [score for score in score_candidate_els if _check_candidate(score.text)]
-
-    if len(scores) == 0:
-        return None
-
-    reviews = [Review(score_el.text) for score_el in scores]
-
-    return ReviewCollection(reviews)
 
 def query_other_reviews(query: str):
-    print(f"Getting results for Google search: {query}")
+    # print(f"Getting results for Google search: {query}")
     search_results = search(query, num_results=15, lang="en")
     results = []
     for search_result in search_results:
         # look at specific sites we can parse
         if re.search(r"gamefaqs.gamespot.com", search_result):
             gamefaqs_res = gamefaqs.extract_gamefaqs(search_result)
-            results.append(gamefaqs_res)
+            results += gamefaqs_res
+        elif re.search(r"www.gamespot.com", search_result):
+            gamespot_res = gamespot.extract(search_result)
+            results += gamespot_res
 
     return results
 
@@ -95,63 +70,73 @@ def query_for_score(title: str, platform: str) -> Optional[ReviewCollection]:
 
     url = f"{base_url}{query}"
 
-    info_log(f"Querying google at url: {url}")
+    info_log(f"Querying for Google top-level reviews at url: {url}")
 
     soup = utils.bs_query(url)
 
-    # print(soup.prettify())
+    google_reviews = google_search_page.extract_google_reviews(soup)
 
-    google_reviews = extract_google_reviews(soup)
+    info_log(f"Querying for other reviews")
+    other_review_results = query_other_reviews(f"{title} {platform} review")
 
-    if google_reviews is None:
-        # query elsewhere
-        other_review_results = query_other_reviews(f"{title} {platform} review")
-        print("!!! got other review results")
-        pprint(other_review_results)
+    all_reviews = google_reviews + other_review_results
+    if len(all_reviews) == 0:
+        return None
 
-    return google_reviews
+    return ReviewCollection(google_reviews + other_review_results)
 
-def query_snes_roms():
-    # todo load snes roms from folders
-    # pass folder paths in as arguments
-
-    BASE_ROMS_DIR = "/Volumes/roms"
-
-    platform = "psx"
-
-    path = f"{BASE_ROMS_DIR}/{platform}"
+def query_roms(base_roms_dir: str, platform: str):
+    path = f"{base_roms_dir}/{platform}"
 
     rc = RomCollection(path, platform)
 
     # limit to a few roms for now, gotta throttle this
-    roms = rc.roms[:20]
+    # roms = rc.roms[:100]
+    roms = rc.roms
 
-    # info_log(f"INFO: Querying for {roms} roms")
+    info_log(f"INFO: Querying reviews for {len(roms)} roms for platform {platform}")
 
     rom_scores = {}
 
-    score_result = query_for_score("Flintstones The The Treasure of Sierra Madrock", "snes")
+    # /// Single rom for testing ///
 
-    print("!!! got score result for flintstones")
-    pprint(score_result)
+    # single_rom_title = "Super Bomberman 3"
+    # single_rom_platform = "snes"
+    # score_result = query_for_score(single_rom_title, single_rom_platform)
+    #
+    # if score_result is None:
+    #     error_log("Could not find any reviews!")
+    #
+    # print(f"!!! got score result for {single_rom_title} ({platform})")
+    # pprint(score_result)
+    # return
 
-    return
+    # /// Single rom for testing ///
 
+    no_review_roms = []
+    err_msgs = []
+    try:
+        for rom in roms:
+            info_log(f"Querying Google for Review: {rom.title} ({rom.platform})")
+            score_result = query_for_score(rom.title, rom.platform)
 
-    for rom in roms:
-        info_log(f"Querying Google for Review: {rom.title} ({rom.platform})")
-        score_result = query_for_score(rom.title, rom.platform)
+            if score_result is None:
+                error_log(f"\nCould not find reviews for game: {rom.title} ({rom.platform})\n")
+                no_review_roms.append(f"{rom.title} ({rom.platform})")
+            else:
+                info_log(f"""\
+                
+    ===
+    Title: {rom.title} (path: {rom.fs.path})
+    Score Result: {score_result.raw_numbers()} (mean: {score_result.mean():.2f})
+    ===
+    """)
 
-        rom_scores[rom]
-        if score_result is None:
-            info_log(f"Could not find easy score result on google for game: {rom.title} ({rom.platform})")
-        else:
-            info_log(f"""\
-            
-===
-Title: {rom.title} (path: {rom.fs.path})
-Score Result: {score_result.raw_numbers()} (mean: {score_result.mean():.2f})
-===
-""")
+            time.sleep(.2)
+    except Exception as e:
+        error_log("GOT AN UNKNOWN ERROR.  Continuing anyway")
+        error_log(str(e))
+        err_msgs.append(str(e))
 
-        time.sleep(1)
+    utils.write_file("./no-review-roms.txt", "\n".join(no_review_roms))
+    utils.write_file("./errors.log", "\n".join(err_msgs))
