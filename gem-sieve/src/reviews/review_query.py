@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import time
+import traceback
 from pprint import pprint
 from typing import Optional, List
 
@@ -77,6 +78,8 @@ def query_roms(platform: str):
     rom_list_path = f"{rom_lists_dir}/rom-list-{platform}.txt"
     logs_dir = os.path.abspath("../../logs")
 
+    os.makedirs(logs_dir, exist_ok=True)
+
     if not os.path.exists(rom_list_path):
         error_log(f"ERROR: No rom list created for platform {platform}")
         sys.exit(1)
@@ -89,19 +92,19 @@ def query_roms(platform: str):
 
     # /// Single rom for testing ///
 
-    # single_rom_title = "Goal!"
-    # single_rom_platform = "nes"
-    # score_result = query_for_score(single_rom_title, single_rom_platform)
-    #
-    # if score_result is None:
-    #     error_log("Could not find any reviews!")
-    #
-    # print(f"!!! got score result for {single_rom_title} ({platform})")
-    # pprint(score_result)
-    # for review in score_result.reviews:
-    #     info_log(f"- {review.score} [{review.source}] ({review.url}) [{review.type}]")
-    #
-    # return
+    single_rom_title = "Twin Cobra"
+    single_rom_platform = "nes"
+    score_result = query_for_score(single_rom_title, single_rom_platform)
+
+    if score_result is None:
+        error_log("Could not find any reviews!")
+
+    print(f"!!! got score result for {single_rom_title} ({platform})")
+    pprint(score_result)
+    for review in score_result.reviews:
+        info_log(f"- {review.score} [{review.source}] ({review.url}) [{review.type}]")
+
+    return
 
     # /// Single rom for testing ///
 
@@ -131,6 +134,8 @@ Title: {rom_title}""")
         error_log("GOT AN UNKNOWN ERROR.  Continuing anyway")
         error_log(str(e))
         err_msgs.append(str(e))
+        err_msgs.append(traceback.format_exc())
+        err_msgs.append("")
 
     utils.write_file(f"{logs_dir}/{platform}-no-review-roms.txt", "\n".join(no_review_roms))
     utils.write_file(f"{logs_dir}/{platform}-errors.log", "\n".join(err_msgs))

@@ -1,2 +1,5 @@
 requests
 fuzzywuzzy
+googlesearch-python
+wcmatch
+lxml

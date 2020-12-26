@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import requests
 import time
 from bs4 import BeautifulSoup
@@ -22,7 +24,8 @@ def check_soup(el):
 
 def bs_query(url) -> BeautifulSoup:
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.2 Safari/605.1.15',
+        # 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.2 Safari/605.1.15',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
     }
 
     # get data
@@ -30,6 +33,8 @@ def bs_query(url) -> BeautifulSoup:
 
     # sleep so hopefully we don't get banned
     time.sleep(.2)
+
+    pprint(r.content)
 
     # parsing html
     return BeautifulSoup(r.content, features='lxml')
